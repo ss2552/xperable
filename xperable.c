@@ -20,9 +20,6 @@
 
 #include <libusb-1.0/libusb.h>
 
-#ifndef FBUSB_H
-#define FBUSB_H
-
 struct fbusb;
 
 enum

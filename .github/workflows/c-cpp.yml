@@ -8,12 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: make
-        run: make
-  
-      - name: out
-        uses: actions/upload-artifact@v4
-        with:
-          name: out
-          path: ./
+     - name: libusb
+       run: sudo apt install libusb-1.0-0
+
+     - uses: actions/checkout@v4
+     - name: make
+       run: make
+ 
+     - name: out
+       uses: actions/upload-artifact@v4
+       with:
+         name: out
+         path: ./

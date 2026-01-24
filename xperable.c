@@ -23,7 +23,7 @@
 enum
 {
     LOG_ERR = 1,
-    LOG__NFO,
+    LOG_NFO,
     LOG_DBG,
 };
 
@@ -267,6 +267,8 @@ int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
 }
 
 // e "fbusb.h" //
+
+int verbosity = LOG_NFO;
 
 static unsigned char rxbuff[1024 * 1024 * 64];
 

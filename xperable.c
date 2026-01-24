@@ -170,6 +170,12 @@ static int fbusb_transfer(struct fbusb *dev, void *buff, int size, int ep)
         transferred += done;
         
         fbusb_log(dev, ep, buff + idx, len, done, res);
+
+        if (res != 0 && transferred == 0)
+        {
+            printf("libusb_bulk_transfer failed: %s ep=0x%02x len=0x%04x size=0x%04x\n", libusb_strerror(res), ep, len, size);
+            return -1;
+        }
         
         if (done < len)
             break;
@@ -353,7 +359,9 @@ static int getvar_all(struct fbusb *dev){
     while (res == FASTBOOT_INFO)
     {
         res = strncmp(rxbuff, "version-bootloader:", 19) == 0 ? 1 : 0;
-        if(res == 1){
+        
+        if (verbosity >= LOG_NFO && (res == 1 || strncmp(rxbuff, "unlocked:", 9) == 0 || strncmp(rxbuff, "version-baseband:", 17) == 0 || strncmp(rxbuff, "secure:", 7) == 0 || strncmp(rxbuff, "product:", 8) == 0) || verbosity >= LOG_DBG)
+        {
             printf("%s\n", rxbuff);
             res = fbusb_strcmd_resp(dev, rxbuff, 65);
         }

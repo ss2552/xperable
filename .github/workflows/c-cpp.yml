@@ -9,7 +9,8 @@ jobs:
 
     steps:
      - name: libusb
-       run: apt install libusb-1.0-0 -y
+       run: sudo apt install libusb-1.0-0 -y \
+        ls /usr/include
  
      - uses: actions/checkout@v4
      - name: make

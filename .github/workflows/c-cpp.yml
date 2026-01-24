@@ -9,7 +9,7 @@ jobs:
 
     steps:
      - name: libusb
-       run: sudo apt install libusb-1.0-0 -y
+       run: sudo apt install libusb-1.0-0-dev -y
 
      - name: ls
        run: sudo ls /usr/lib/x86_64-linux-gnu

@@ -1,13 +1,9 @@
 CFLAGS := -D_GNU_SOURCE -ggdb
 
-XPERABLE ?= xperable
-CC := gcc
-CXX := g++
-
-all: $(XPERABLE)
+all: xperable
 
 xperable.o: xperable.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+	gcc $(CFLAGS) -o $@ -c $<
 
-$(XPERABLE): xperable.o
-	$(CXX) $(CFLAGS) -static -Llibusb-static -o $@ $^ -lusb-1.0
+xperable: xperable.o
+	g++ $(CFLAGS) -Llibusb -o $@ $^ -lusb-1.0

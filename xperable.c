@@ -18,7 +18,7 @@
 
 #include <errno.h>
 
-#include <libusb-1.0/libusb.h>
+#include "libusb/libusb.h"
 
 // "fbusb.h" //
 

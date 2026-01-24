@@ -1,9 +1,7 @@
-CFLAGS := -D_GNU_SOURCE -ggdb
+CFLAGS := -D_GNU_SOURCE
 
 all: xperable
 
-xperable: xperable.c
+xperable.o: xperable.c
+	g++ $(CFLAGS) -Llibusb -o xperable.o xperable -lusb-1.0
 	gcc $(CFLAGS) -o $@ -c $<
-
-# xperable: xperable.o
-#	g++ $(CFLAGS) -Llibusb -o $@ $^ -l/usr/include/libusb-1.0

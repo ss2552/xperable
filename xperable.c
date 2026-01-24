@@ -86,13 +86,7 @@ static int fbusb_transfer(struct fbusb *dev, void *buff, int size, int ep)
         done = 0;
         res = libusb_bulk_transfer(dev->h, ep, buff + idx, len, &done, dev->timeout);
         transferred += done;
-        fbusb_log(dev, ep, buff + idx, len, done, res);
-
-        if (res != 0 && transferred == 0)
-        {
-            printf("libusb_bulk_transfer failed: %s ep=0x%02x len=0x%04x size=0x%04x\n", libusb_strerror(res), ep, len, size);
-            return -1;
-        }
+        
         if (done < len)
             break;
     }

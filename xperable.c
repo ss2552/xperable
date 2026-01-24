@@ -20,12 +20,20 @@
 
 #include <libusb-1.0/libusb.h>
 
+#ifndef FBUSB_H
+#define FBUSB_H
+
+struct fbusb;
+
 enum
 {
     LOG_ERR = 1,
     LOG_NFO,
     LOG_DBG,
 };
+
+int verbosity = LOG_NFO;
+static unsigned char rxbuff[1024 * 1024 * 64];
 
 static void fbusb_log(struct fbusb *dev, int ep, void *buff, int len, int done, int res)
 {
@@ -273,10 +281,6 @@ int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
 }
 
 // e "fbusb.h" //
-
-int verbosity = LOG_NFO;
-
-static unsigned char rxbuff[1024 * 1024 * 64];
 
 // ヘッダー
 

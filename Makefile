@@ -4,4 +4,4 @@ all: xperable
 
 xperable: xperable.c
 	gcc $(CFLAGS) -o xperable.o -c xperable.c
-	g++ $(CFLAGS) -Lx86_64-linux-gnu/libusb-1.0.a -o xperable.o xperable -Ilibusb/libusb.h
+	g++ $(CFLAGS) -Lx86_64-linux-gnu/libusb-1.0.a -o xperable xperable.o -Ilibusb/libusb.h

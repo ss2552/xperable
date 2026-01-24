@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+     - name: libusb
+       run: apt install libusb-1.0-0 -y
+ 
      - uses: actions/checkout@v4
      - name: make
        run: make
@@ -16,4 +19,4 @@ jobs:
        uses: actions/upload-artifact@v4
        with:
          name: out
-         path: ./
+         path: xperable

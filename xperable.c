@@ -20,6 +20,88 @@
 
 #include <libusb-1.0/libusb.h>
 
+enum
+{
+    LOG_ERR = 1,
+    LOG__NFO,
+    LOG_DBG,
+};
+
+static void fbusb_log(struct fbusb *dev, int ep, void *buff, int len, int done, int res)
+{
+    int i;
+    const char *dir;
+    const char *status;
+    const unsigned char *ptr = buff;
+
+    dir = (ep & 0x80) ? "<-" : "->";
+
+    switch (res)
+    {
+    case LIBUSB_SUCCESS:
+        status = "OK";
+        break;
+    case LIBUSB_ERROR_IO:
+        status = "IO";
+        break;
+    case LIBUSB_ERROR_INVALID_PARAM:
+        status = "IP";
+        break;
+    case LIBUSB_ERROR_ACCESS:
+        status = "AC";
+        break;
+    case LIBUSB_ERROR_NO_DEVICE:
+        status = "ND";
+        break;
+    case LIBUSB_ERROR_NOT_FOUND:
+        status = "NF";
+        break;
+    case LIBUSB_ERROR_BUSY:
+        status = "BS";
+        break;
+    case LIBUSB_ERROR_TIMEOUT:
+        status = "TO";
+        break;
+    case LIBUSB_ERROR_OVERFLOW:
+        status = "OF";
+        break;
+    case LIBUSB_ERROR_PIPE:
+        status = "PI";
+        break;
+    case LIBUSB_ERROR_INTERRUPTED:
+        status = "IN";
+        break;
+    case LIBUSB_ERROR_NO_MEM:
+        status = "NM";
+        break;
+    case LIBUSB_ERROR_NOT_SUPPORTED:
+        status = "NS";
+        break;
+    case LIBUSB_ERROR_OTHER:
+        status = "OT";
+        break;
+    default:
+        status = "??";
+        break;
+    }
+
+    printf("      {%08x%s%08x:%s}", len, dir, done, status);
+
+    if (verbosity >= LOG_DBG)
+    {
+        for (i = 0; i < 16; i++)
+            if (i < done)
+                printf(" %02x", ptr[i]);
+            else
+                printf("   ");
+    }
+
+    printf(" \"");
+    for (i = 0; i < 64 && i < done; i++)
+        printf("%c", isprint(ptr[i]) ? ptr[i] : '.');
+    printf("\"\n");
+}
+
 // "fbusb.h" //
 
 struct fbusb;
@@ -86,6 +168,8 @@ static int fbusb_transfer(struct fbusb *dev, void *buff, int size, int ep)
         done = 0;
         res = libusb_bulk_transfer(dev->h, ep, buff + idx, len, &done, dev->timeout);
         transferred += done;
+        
+        fbusb_log(dev, ep, buff + idx, len, done, res);
         
         if (done < len)
             break;

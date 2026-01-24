@@ -18,7 +18,7 @@
 
 #include <errno.h>
 
-#include "libusb/libusb.h"
+#include <libusb-1.0/libusb.h>
 
 // "fbusb.h" //
 
@@ -194,6 +194,9 @@ static int getvar_all(struct fbusb *dev);
 // e ヘッダー
 
 int main(){
+
+    printf("開始");
+
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
     struct fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
     if(dev == NULL){ return 1; }

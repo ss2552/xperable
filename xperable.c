@@ -1,12 +1,5 @@
 // 元のコード https://github.com/j4nn/xperable
 
-// SPDX-License-Identifier: GPL-3.0-or-later
-/*
- * xperable.c - Xperia ABL fastboot Exploit of CVE-2021-1931
- *
- * Copyright (C) 2025 j4nn at xdaforums
- */
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -15,15 +8,12 @@
 #include <string.h>
 #include <stdint.h>
 #include <ctype.h>
-
 #include <errno.h>
-
 #include <libusb-1.0/libusb.h>
 
 struct fbusb;
 
-enum
-{
+enum {
     LOG_ERR = 1,
     LOG_NFO,
     LOG_DBG,
@@ -32,8 +22,7 @@ enum
 int verbosity = LOG_NFO;
 static unsigned char rxbuff[1024 * 1024 * 64];
 
-static void fbusb_log(struct fbusb *dev, int ep, void *buff, int len, int done, int res)
-{
+static void fbusb_log(struct fbusb *dev, int ep, void *buff, int len, int done, int res){
     int i;
     const char *dir;
     const char *status;
@@ -41,69 +30,40 @@ static void fbusb_log(struct fbusb *dev, int ep, void *buff, int len, int done, 
 
     dir = (ep & 0x80) ? "<-" : "->";
 
-    switch (res)
-    {
-    case LIBUSB_SUCCESS:
-        status = "OK";
-        break;
-    case LIBUSB_ERROR_IO:
-        status = "IO";
-        break;
-    case LIBUSB_ERROR_INVALID_PARAM:
-        status = "IP";
-        break;
-    case LIBUSB_ERROR_ACCESS:
-        status = "AC";
-        break;
-    case LIBUSB_ERROR_NO_DEVICE:
-        status = "ND";
-        break;
-    case LIBUSB_ERROR_NOT_FOUND:
-        status = "NF";
-        break;
-    case LIBUSB_ERROR_BUSY:
-        status = "BS";
-        break;
-    case LIBUSB_ERROR_TIMEOUT:
-        status = "TO";
-        break;
-    case LIBUSB_ERROR_OVERFLOW:
-        status = "OF";
-        break;
-    case LIBUSB_ERROR_PIPE:
-        status = "PI";
-        break;
-    case LIBUSB_ERROR_INTERRUPTED:
-        status = "IN";
-        break;
-    case LIBUSB_ERROR_NO_MEM:
-        status = "NM";
-        break;
-    case LIBUSB_ERROR_NOT_SUPPORTED:
-        status = "NS";
-        break;
-    case LIBUSB_ERROR_OTHER:
-        status = "OT";
-        break;
-    default:
-        status = "??";
-        break;
+    switch (res){
+        case LIBUSB_SUCCESS: status = "OK"; break;
+        case LIBUSB_ERROR_IO: status = "IO"; break;
+        case LIBUSB_ERROR_INVALID_PARAM: status = "IP"; break;
+        case LIBUSB_ERROR_ACCESS: status = "AC"; break;
+        case LIBUSB_ERROR_NO_DEVICE: status = "ND"; break;
+        case LIBUSB_ERROR_NOT_FOUND: status = "NF"; break;
+        case LIBUSB_ERROR_BUSY: status = "BS"; break;
+        case LIBUSB_ERROR_TIMEOUT: status = "TO"; break;
+        case LIBUSB_ERROR_OVERFLOW: status = "OF"; break;
+        case LIBUSB_ERROR_PIPE: status = "PI"; break;
+        case LIBUSB_ERROR_INTERRUPTED: status = "IN"; break;
+        case LIBUSB_ERROR_NO_MEM: status = "NM"; break;
+        case LIBUSB_ERROR_NOT_SUPPORTED: status = "NS"; break;
+        case LIBUSB_ERROR_OTHER: status = "OT"; break;
+        default: status = "??"; break;
     }
 
     printf("      {%08x%s%08x:%s}", len, dir, done, status);
 
-    if (verbosity >= LOG_DBG)
-    {
-        for (i = 0; i < 16; i++)
-            if (i < done)
+    if (verbosity >= LOG_DBG){
+        for (i = 0; i < 16; i++){
+            if (i < done){
                 printf(" %02x", ptr[i]);
-            else
+            }else{
                 printf("   ");
+            }
+        }
     }
 
     printf(" \"");
-    for (i = 0; i < 64 && i < done; i++)
+    for (i = 0; i < 64 && i < done; i++){
         printf("%c", isprint(ptr[i]) ? ptr[i] : '.');
+    }
     printf("\"\n");
 }
 
@@ -145,14 +105,6 @@ int fastboot_parse_result(const char *status)
         if (strncmp(status, fastboot_results[i], 4) == 0)
             return i;
     return i;
-}
-
-void fbusb_exit(struct fbusb *dev)
-{
-    libusb_release_interface(dev->h, dev->iface);
-    libusb_close(dev->h);
-    libusb_exit(NULL);
-    free(dev);
 }
 
 static int fbusb_transfer(struct fbusb *dev, void *buff, int size, int ep)
@@ -237,15 +189,16 @@ int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
 int fbusb_bufcmd(struct fbusb *dev, void *req, int reqsz, void *rsp, int *rspsz)
 {
     int res = fbusb_send(dev, req, reqsz);
+    
     if (res != reqsz)
     {
         *rspsz = 0;
         if (res > 0)
         {
-            printf("fbusb_bufcmd send incomplete: reqsz=0x%02x res=0x%04x\n", reqsz, res);
+            printf("[E] fbusb_bufcmd send incomplete: reqsz=0x%02x res=0x%04x\n", reqsz, res);
             return -1;
         }
-        printf("fbusb_bufcmd send failed: reqsz=0x%02x res=0x%04x\n", reqsz, res);
+        printf("[E] fbusb_bufcmd send failed: reqsz=0x%02x res=0x%04x\n", reqsz, res);
         return -1;
     }
     return fbusb_bufcmd_resp(dev, rsp, rspsz);
@@ -279,60 +232,81 @@ int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
 
 // e "fbusb.h" //
 
-// ヘッダー
-
-struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo);
-static int getvar_all(struct fbusb *dev);
-
-// e ヘッダー
-
-int main(){
-
-    printf("開始");
-
-    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
-    struct fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
-    if(dev == NULL){ return 1; }
-    getvar_all(dev);
-    fbusb_exit(dev);
-    return 0;
+static int getvar_all(struct fbusb *dev){
+    int res = fbusb_strcmd(dev, "getvar:all", rxbuff, 65);
+    while (res == FASTBOOT_INFO){
+        res = 0;
+        if(strncmp(rxbuff, "version-bootloader:", 19) == 0){
+            res = 1;
+        }
+        if (verbosity >= LOG_NFO && (res == 1 || strncmp(rxbuff, "unlocked:", 9) == 0 || strncmp(rxbuff, "version-baseband:", 17) == 0 || strncmp(rxbuff, "secure:", 7) == 0 || strncmp(rxbuff, "product:", 8) == 0) || verbosity >= LOG_DBG)
+        {
+            printf("%s\n", rxbuff);
+        }
+        res = fbusb_strcmd_resp(dev, rxbuff, 65);
+    }
+    if (res != FASTBOOT_OKAY)
+    {
+        if (res > 0)
+        {
+            printf("getvar all failed: %s\n", rxbuff);
+        }
+        else
+        {
+            printf("getvar all protocol error, res=%d\n", res);
+        }
+    }
+    return res;
 }
 
 struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
+
     int res;
     struct fbusb *dev;
+
     libusb_device_handle *h;
 
-    res = libusb_init(NULL);
-    if (res < 0)
-    {
-        printf("libusb_init failed: %s\n", libusb_strerror(res));
+    if (res = libusb_init(NULL) < 0){
+        printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
         return NULL;
     }
 
     // | 端末の接続を待機中... | waiting for device connection. |
 
-    h = libusb_open_device_with_vid_pid(NULL, vid, pid);
-    if (h == NULL)
-    {
-        printf("libusb_open_device_with_vid_pid (%04x:%04x) failed\n", vid, pid);
-        goto err_exit1;
+    for(uint8_t i = 0; i <= 10; ++i){
+        h = libusb_open_device_with_vid_pid(NULL, vid, pid);
+        if(h == NULL){
+            printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
+            sleep(1);
+        }
+        break;
+    }
+    if(h == NULL){
+        printf("[E] h == NULL");
+        libusb_exit(NULL);
+        return NULL;
     }
 
-    if (libusb_kernel_driver_active(h, 0) == 1)
-    {
-        if (libusb_detach_kernel_driver(h, 0) != 0)
-        {
-            printf("libusb_detach_kernel_driver failed\n");
-            goto err_exit2;
+    // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceClass
+    // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceProtocol
+    // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceSubclass
+    if (libusb_kernel_driver_active(h, 0) == 1){
+        if(libusb_detach_kernel_driver(h, 0) != 0){
+            printf("[E] libusb_detach_kernel_driver failed\n");
+            libusb_close(h);
+            libusb_exit(NULL);
+            return NULL;
         }
     }
 
+    // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/claimInterface
     res = libusb_claim_interface(h, iface);
     if (res < 0)
     {
-        printf("libusb_claim_interface failed: %s\n", libusb_strerror(res));
-        goto err_exit2;
+        printf("[E] libusb_claim_interface failed: %s\n", libusb_strerror(res));
+        libusb_close(h);
+        libusb_exit(NULL);
+        return NULL;
     }
 
     dev = calloc(1, sizeof(struct fbusb));
@@ -348,35 +322,25 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     }
 
     libusb_release_interface(h, iface);
-err_exit2:
     libusb_close(h);
-err_exit1:
     libusb_exit(NULL);
     return NULL;
 }
 
-static int getvar_all(struct fbusb *dev){
-    int res = fbusb_strcmd(dev, "getvar:all", rxbuff, 65);
-    while (res == FASTBOOT_INFO)
-    {
-        res = strncmp(rxbuff, "version-bootloader:", 19) == 0 ? 1 : 0;
-        
-        if (verbosity >= LOG_NFO && (res == 1 || strncmp(rxbuff, "unlocked:", 9) == 0 || strncmp(rxbuff, "version-baseband:", 17) == 0 || strncmp(rxbuff, "secure:", 7) == 0 || strncmp(rxbuff, "product:", 8) == 0) || verbosity >= LOG_DBG)
-        {
-            printf("%s\n", rxbuff);
-            res = fbusb_strcmd_resp(dev, rxbuff, 65);
-        }
-    }
-    if (res != FASTBOOT_OKAY)
-    {
-        if (res > 0)
-        {
-            printf("getvar all failed: %s\n", rxbuff);
-        }
-        else
-        {
-            printf("getvar all protocol error, res=%d\n", res);
-        }
-    }
-    return res;
+int main(){
+
+    printf("開始");
+
+    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
+    struct fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
+    if(dev == NULL){ return 1; }
+    getvar_all(dev);
+    
+    printf("終了");
+
+    libusb_release_interface(dev->h, dev->iface);
+    libusb_close(dev->h);
+    libusb_exit(NULL);
+    free(dev);
+    return 0;
 }

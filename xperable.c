@@ -282,7 +282,6 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
         sleep(1);
     }
     if(h == NULL){
-        printf("[E] h == NULL");
         libusb_exit(NULL);
         return NULL;
     }

@@ -275,11 +275,11 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
     for(uint8_t i = 0; i <= 10; ++i){
         h = libusb_open_device_with_vid_pid(NULL, vid, pid);
-        if(h == NULL){
-            printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
-            sleep(1);
+        if(h != NULL){
+            break;
         }
-        break;
+        printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
+        sleep(1);
     }
     if(h == NULL){
         printf("[E] h == NULL");
@@ -329,15 +329,12 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
 int main(){
 
-    printf("開始");
-
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
     struct fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
-    if(dev == NULL){ return 1; }
+    if(dev == NULL){
+        return 1;
+    }
     getvar_all(dev);
-    
-    printf("終了");
-
     libusb_release_interface(dev->h, dev->iface);
     libusb_close(dev->h);
     libusb_exit(NULL);

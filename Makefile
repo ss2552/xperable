@@ -9,4 +9,4 @@ xperable_x86_64: xperable.c
 
 xperable_aarch64: xperable.c
 	gcc $(CFLAGS) -I/usr/include/libusb-1.0 -c xperable.c -o xperable.o
-	g++ $(CFLAGS) -L/usr/lib/aarch64-linux-gnu -o $@ xperable.o -lusb-1.0
+	g++ $(CFLAGS) -L/usr/lib/aarch64-linux-gnu -o xperable xperable.o -lusb-1.0

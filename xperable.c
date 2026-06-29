@@ -155,7 +155,7 @@ int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
 {
     int res;
     int received;
-    void *s = rsp;
+    char *s = rsp;
     if (rspsz == NULL || *rspsz < 4)
         return -1;
     memset(rsp, 0, *rspsz);
@@ -204,7 +204,7 @@ int fbusb_bufcmd(struct fbusb *dev, void *req, int reqsz, void *rsp, int *rspsz)
     return fbusb_bufcmd_resp(dev, rsp, rspsz);
 }
 
-int fbusb_strcmd(struct fbusb *dev, const void *req, void *rsp, int rspmaxsize)
+int fbusb_strcmd(struct fbusb *dev, const char *req, char *rsp, int rspmaxsize)
 {
     int res;
     int rspsz = rspmaxsize - 1;
@@ -217,7 +217,7 @@ int fbusb_strcmd(struct fbusb *dev, const void *req, void *rsp, int rspmaxsize)
     return res;
 }
 
-int fbusb_strcmd_resp(struct fbusb *dev, void *rsp, int rspmaxsize)
+int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
 {
     int res;
     int rspsz = rspmaxsize - 1;
@@ -274,7 +274,7 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
     // | 端末の接続を待機中... | waiting for device connection. |
 
-    for(uint8_t i = 0; i <= 10; ++i){
+    for(uint8_t i = 0; i <= FF; ++i){
         h = libusb_open_device_with_vid_pid(NULL, vid, pid);
         if(h != NULL){
             break;

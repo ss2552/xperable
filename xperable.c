@@ -266,7 +266,7 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
     libusb_device_handle *h;
 
-#if ANDROID_TERMUX
+#ifdef ANDROID_TERMUX
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 #endif
 
@@ -276,25 +276,14 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
         return NULL;
     }
 
-#if ANDROID_TERMUX
-/*
+#ifdef ANDROID_TERMUX
     libusb_context *context;
-    libusb_device *device;
-    struct libusb_device_descriptor desc;
-    unsigned char buffer[256];
     int fd;
     res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
-        printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
+        printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
         return NULL;
     }
-    device = libusb_get_device(h);
-    res = libusb_get_device_descriptor(device, &desc);
-    if (res < 0){
-        printf("[E] libusb_get_device_descriptor failed: %s\n", libusb_strerror(res));
-        return NULL;
-    }
-*/
 #endif
 
     // | 端末の接続を待機中... | waiting for device connection. |

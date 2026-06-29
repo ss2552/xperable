@@ -9,4 +9,4 @@ xperable_x86_64: xperable.c
 	g++ $(CFLAGS) -Lx86_64-linux-gnu/libusb-1.0.a -o xperable xperable.o -lusb-1.0
 
 xperable_aarch64: xperable.c
-	clang -o ../x xperable.c -lusb-1.0
+    ANDROID_TERMUX=1 clang -o ../x xperable.c -lusb-1.0

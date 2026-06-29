@@ -289,11 +289,16 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     // | 端末の接続を待機中... | waiting for device connection. |
 
     for(uint8_t i = 0; i <= 99; ++i){
+#ifmdef ANDROID_TERMUX
         h = libusb_open_device_with_vid_pid(NULL, vid, pid);
         if(h != NULL){
             break;
         }
         printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
+#else
+
+
+#endif
         sleep(1);
     }
     if(h == NULL){
@@ -313,6 +318,8 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
         }
     }
 
+#endif
+    
     // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/claimInterface
     res = libusb_claim_interface(h, iface);
     if (res < 0)

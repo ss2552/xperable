@@ -155,7 +155,7 @@ int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
 {
     int res;
     int received;
-    char *s = rsp;
+    void *s = rsp;
     if (rspsz == NULL || *rspsz < 4)
         return -1;
     memset(rsp, 0, *rspsz);
@@ -204,7 +204,7 @@ int fbusb_bufcmd(struct fbusb *dev, void *req, int reqsz, void *rsp, int *rspsz)
     return fbusb_bufcmd_resp(dev, rsp, rspsz);
 }
 
-int fbusb_strcmd(struct fbusb *dev, const char *req, char *rsp, int rspmaxsize)
+int fbusb_strcmd(struct fbusb *dev, const void *req, void *rsp, int rspmaxsize)
 {
     int res;
     int rspsz = rspmaxsize - 1;
@@ -217,7 +217,7 @@ int fbusb_strcmd(struct fbusb *dev, const char *req, char *rsp, int rspmaxsize)
     return res;
 }
 
-int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
+int fbusb_strcmd_resp(struct fbusb *dev, void *rsp, int rspmaxsize)
 {
     int res;
     int rspsz = rspmaxsize - 1;
@@ -266,7 +266,8 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
     libusb_device_handle *h;
 
-    if (res = libusb_init(NULL) < 0){
+    res = libusb_init(NULL);
+    if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
         return NULL;
     }

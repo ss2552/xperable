@@ -259,13 +259,15 @@ static int getvar_all(struct fbusb *dev){
     return res;
 }
 
+libusb_context *context;
+int *fd;
+libusb_device device;
+libusb_device_handle h;
+libusb_device_descriptor desc;
+
 struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
 
     int res;
-    struct fbusb *dev;
-
-    libusb_device_handle *h;
-
 #ifdef ANDROID_TERMUX
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 #endif
@@ -277,33 +279,31 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     }
 
 #ifdef ANDROID_TERMUX
-    libusb_context *context;
-    int fd;
     res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
         return NULL;
     }
-#endif
+
+    device = libusb_get_device(&h);
+    res = libusb_get_device_descriptor(device, &desc);
+    if(desc.idVendor != vid || desc.idProduct != pid){
+        printf("Vendor ID: %04x\n", desc.idVendor);
+        printf("Product ID: %04x\n", desc.idProduct);
+        return NULL;
+    }
+
+#else
 
     // | 端末の接続を待機中... | waiting for device connection. |
 
     for(uint8_t i = 0; i <= 99; ++i){
-#ifmdef ANDROID_TERMUX
         h = libusb_open_device_with_vid_pid(NULL, vid, pid);
         if(h != NULL){
             break;
         }
         printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
-#else
-
-
-#endif
         sleep(1);
-    }
-    if(h == NULL){
-        libusb_exit(NULL);
-        return NULL;
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceClass
@@ -312,8 +312,6 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     if (libusb_kernel_driver_active(h, 0) == 1){
         if(libusb_detach_kernel_driver(h, 0) != 0){
             printf("[E] libusb_detach_kernel_driver failed\n");
-            libusb_close(h);
-            libusb_exit(NULL);
             return NULL;
         }
     }
@@ -325,40 +323,36 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     if (res < 0)
     {
         printf("[E] libusb_claim_interface failed: %s\n", libusb_strerror(res));
-        libusb_close(h);
-        libusb_exit(NULL);
         return NULL;
     }
 
-    dev = calloc(1, sizeof(struct fbusb));
-    if (dev != NULL)
-    {
-        dev->h = h;
-        dev->iface = iface;
-        dev->epi = epi;
-        dev->epo = epo;
-        dev->maxsize = 16 * 1024 * 1024;
-        dev->timeout = 5000;
-        return dev;
-    }
+    fbusb *dev;
+    dev->h = h;
+    dev->iface = iface;
+    dev->epi = epi;
+    dev->epo = epo;
+    dev->maxsize = 16 * 1024 * 1024;
+    dev->timeout = 5000;
+    return dev;
 
-    libusb_release_interface(h, iface);
-    libusb_close(h);
-    libusb_exit(NULL);
-    return NULL;
 }
 
-int main(){
+int main(int argc, char **argv){
 
-    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
-    struct fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
-    if(dev == NULL){
+    if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
+        print("termux-usb -l %s %s\n", argv[0], "/dev/");
         return 1;
     }
-    getvar_all(dev);
-    libusb_release_interface(dev->h, dev->iface);
-    libusb_close(dev->h);
+
+    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
+    fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
+    if(dev != NULL){
+        getvar_all(dev);
+        libusb_release_interface(h, iface);
+        free(dev);
+    }
+    
+    libusb_close(h);
     libusb_exit(NULL);
-    free(dev);
     return 0;
 }

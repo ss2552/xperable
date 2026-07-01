@@ -233,23 +233,23 @@ int fbusb_strcmd_resp(struct fbusb *dev, char *rsp, int rspmaxsize)
 // e "fbusb.h" //
 
 static int getvar_all(struct fbusb *dev){
-    int res = fbusb_strcmd(dev, "getvar:all", rxbuff, 65);
+    int res = fbusb_strcmd(dev, "getvar:all", (char *)rxbuff, 65);
     while (res == FASTBOOT_INFO){
         res = 0;
-        if(strncmp(rxbuff, "version-bootloader:", 19) == 0){
+        if(strncmp((char *)rxbuff, "version-bootloader:", 19) == 0){
             res = 1;
         }
-        if (verbosity >= LOG_NFO && (res == 1 || strncmp(rxbuff, "unlocked:", 9) == 0 || strncmp(rxbuff, "version-baseband:", 17) == 0 || strncmp(rxbuff, "secure:", 7) == 0 || strncmp(rxbuff, "product:", 8) == 0) || verbosity >= LOG_DBG)
+        if (verbosity >= LOG_NFO && (res == 1 || strncmp((char *)rxbuff, "unlocked:", 9) == 0 || strncmp((char *)rxbuff, "version-baseband:", 17) == 0 || strncmp((char *)rxbuff, "secure:", 7) == 0 || strncmp((char *)rxbuff, "product:", 8) == 0))
         {
-            printf("%s\n", rxbuff);
+            printf("%s\n", (char *)rxbuff);
         }
-        res = fbusb_strcmd_resp(dev, rxbuff, 65);
+        res = fbusb_strcmd_resp(dev, (char *)rxbuff, 65);
     }
     if (res != FASTBOOT_OKAY)
     {
         if (res > 0)
         {
-            printf("getvar all failed: %s\n", rxbuff);
+            printf("getvar all failed: %s\n", (char *)rxbuff);
         }
         else
         {
@@ -265,13 +265,11 @@ int main(int argc, char **argv){
 
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
 
-// fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo)
-
-int res;
+    int res;
 #ifdef ANDROID_TERMUX
     int fd; 
     if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
-        print("termux-usb -l %s %s\n", argv[0], "/dev/");
+        printf("termux-usb -l %s %s\n", argv[0], "/dev/");
         return 1;
     }
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
@@ -284,8 +282,8 @@ int res;
     }
 
 #ifdef ANDROID_TERMUX
-    libusb_context context;
-    res = libusb_wrap_sys_device(&context, (intptr_t) &fd, h);
+    libusb_context *context;
+    res = libusb_wrap_sys_device(context, (intptr_t) &fd, &h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
         return -1;
@@ -309,13 +307,19 @@ int res;
 
     // | 端末の接続を待機中... | waiting for device connection. |
 
+    h = NULL;
     for(uint8_t i = 0; i <= 99; ++i){
         h = libusb_open_device_with_vid_pid(NULL, vendor_id, product_id);
         if(h != NULL){
             break;
         }
-        printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vendor_id, product_id, i);
+        printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed (attempt %u)\n", vendor_id, product_id, i);
         sleep(1);
+    }
+
+    if (h == NULL) {
+        printf("[E] Failed to find device after all attempts\n");
+        return -1;
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceClass
@@ -338,23 +342,20 @@ int res;
         return -1;
     }
 
-    fbusb dev;
-    memcpy(&dev, 0, sizeof(fsusb));
+    struct fbusb dev;
+    memset(&dev, 0, sizeof(struct fbusb));
 
-    dev->h = *h;
-    dev->iface = inter_face;
-    dev->epi = endpoint_in;
-    dev->epo = endpoint_out;
-    dev->maxsize = 16 * 1024 * 1024;
-    dev->timeout = 5000;
+    dev.h = h;
+    dev.iface = inter_face;
+    dev.epi = endpoint_in;
+    dev.epo = endpoint_out;
+    dev.maxsize = 16 * 1024 * 1024;
+    dev.timeout = 5000;
 
-// fbusb_init
-
-    getvar_all(dev);
+    getvar_all(&dev);
 
 clean_exit:
     libusb_release_interface(h, inter_face);
-    free(dev);
 
 exit:
     libusb_close(h);

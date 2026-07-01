@@ -272,8 +272,11 @@ int main(int argc, char **argv){
     int fd; 
     if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
         printf("termux-usb -l %s %s\n", argv[0], "/dev/");
+    }else{
+        printf("termux-usb -l %s\n", "/dev/*/*");
         return 1;
     }
+    
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 #endif
 
@@ -285,7 +288,8 @@ int main(int argc, char **argv){
 
 #ifdef ANDROID_TERMUX
     libusb_context *context;
-    res = libusb_wrap_sys_device(context, (intptr_t) &fd, &h);
+    printf("%d\n", fd);
+    res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
         return -1;

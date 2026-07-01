@@ -259,38 +259,50 @@ static int getvar_all(struct fbusb *dev){
     return res;
 }
 
-libusb_context *context;
-int *fd;
-libusb_device device;
-libusb_device_handle h;
-libusb_device_descriptor desc;
+int main(int argc, char **argv){
 
-struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
+    libusb_device_handle *h;
 
-    int res;
+    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
+
+// fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo)
+
+int res;
 #ifdef ANDROID_TERMUX
+    int fd; 
+    if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
+        print("termux-usb -l %s %s\n", argv[0], "/dev/");
+        return 1;
+    }
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 #endif
 
     res = libusb_init(NULL);
     if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
-        return NULL;
+        return -1;
     }
 
 #ifdef ANDROID_TERMUX
-    res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
+    libusb_context context;
+    res = libusb_wrap_sys_device(&context, (intptr_t) &fd, h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
-        return NULL;
+        return -1;
     }
 
-    device = libusb_get_device(&h);
+    libusb_device *device;
+    device = libusb_get_device(h);
+    libusb_device_descriptor desc;
     res = libusb_get_device_descriptor(device, &desc);
-    if(desc.idVendor != vid || desc.idProduct != pid){
+    if(res < 0){
+        printf("[E] libusb_get_device_descriptor failed: %s\n", libusb_strerror(res));
+        return -1;
+    }
+    if(desc.idVendor != vendor_id || desc.idProduct != product_id){
         printf("Vendor ID: %04x\n", desc.idVendor);
         printf("Product ID: %04x\n", desc.idProduct);
-        return NULL;
+        return -1;
     }
 
 #else
@@ -298,11 +310,11 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     // | 端末の接続を待機中... | waiting for device connection. |
 
     for(uint8_t i = 0; i <= 99; ++i){
-        h = libusb_open_device_with_vid_pid(NULL, vid, pid);
+        h = libusb_open_device_with_vid_pid(NULL, vendor_id, product_id);
         if(h != NULL){
             break;
         }
-        printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vid, pid, i);
+        printf("[E] libusb_open_device_with_vid_pid (%04x:%04x) failed （%u)\n", vendor_id, product_id, i);
         sleep(1);
     }
 
@@ -312,47 +324,41 @@ struct fbusb *fbusb_init(int vid, int pid, int iface, int epi, int epo){
     if (libusb_kernel_driver_active(h, 0) == 1){
         if(libusb_detach_kernel_driver(h, 0) != 0){
             printf("[E] libusb_detach_kernel_driver failed\n");
-            return NULL;
+            return -1;
         }
     }
 
 #endif
     
     // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/claimInterface
-    res = libusb_claim_interface(h, iface);
+    res = libusb_claim_interface(h, inter_face);
     if (res < 0)
     {
         printf("[E] libusb_claim_interface failed: %s\n", libusb_strerror(res));
-        return NULL;
+        return -1;
     }
 
-    fbusb *dev;
-    dev->h = h;
-    dev->iface = iface;
-    dev->epi = epi;
-    dev->epo = epo;
+    fbusb dev;
+    memcpy(&dev, 0, sizeof(fsusb));
+
+    dev->h = *h;
+    dev->iface = inter_face;
+    dev->epi = endpoint_in;
+    dev->epo = endpoint_out;
     dev->maxsize = 16 * 1024 * 1024;
     dev->timeout = 5000;
-    return dev;
 
-}
+// fbusb_init
 
-int main(int argc, char **argv){
+    getvar_all(dev);
 
-    if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
-        print("termux-usb -l %s %s\n", argv[0], "/dev/");
-        return 1;
-    }
+clean_exit:
+    libusb_release_interface(h, inter_face);
+    free(dev);
 
-    const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
-    fbusb *dev = fbusb_init(vendor_id, product_id, inter_face, endpoint_in, endpoint_out);
-    if(dev != NULL){
-        getvar_all(dev);
-        libusb_release_interface(h, iface);
-        free(dev);
-    }
-    
+exit:
     libusb_close(h);
     libusb_exit(NULL);
     return 0;
+
 }

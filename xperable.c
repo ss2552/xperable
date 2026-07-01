@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <libusb-1.0/libusb.h>
 
+#define ANDROID_TERMUX true
+
 struct fbusb;
 
 enum {

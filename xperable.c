@@ -293,7 +293,7 @@ int main(int argc, char **argv){
 
     libusb_device *device;
     device = libusb_get_device(h);
-    libusb_device_descriptor desc;
+    struct libusb_device_descriptor desc;
     res = libusb_get_device_descriptor(device, &desc);
     if(res < 0){
         printf("[E] libusb_get_device_descriptor failed: %s\n", libusb_strerror(res));

@@ -271,9 +271,9 @@ int main(int argc, char **argv){
 #ifdef ANDROID_TERMUX
     int fd; 
     if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
-        printf("termux-usb -l %s %s\n", argv[0], "/dev/");
+        printf("$termux-usb -l %s %s\n", argv[0], "/dev/");
     }else{
-        printf("termux-usb -l %s\n", "/dev/*/*");
+        printf("$termux-usb -l %s\n", "/dev/*/*");
         return 1;
     }
     

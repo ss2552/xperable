@@ -11,8 +11,6 @@
 #include <errno.h>
 #include <libusb-1.0/libusb.h>
 
-#define ANDROID_TERMUX true
-
 static unsigned char rxbuff[1024 * 1024 * 64];
 
 // "fbusb.h" //
@@ -201,7 +199,7 @@ int main(int argc, char **argv){
 
     int res;
 
-#ifdef ANDROID_TERMUX
+#ifdef A
 
     libusb_context *context = NULL;
     libusb_device *device;

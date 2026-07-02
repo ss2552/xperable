@@ -269,14 +269,15 @@ int main(int argc, char **argv){
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
 
     int res;
+
 #ifdef ANDROID_TERMUX
     
-    int fd; 
-    if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
-        printf("$termux-usb -l %s %s\n", argv[0], "/dev/");
-    }else{
-        printf("$termux-usb -l %s\n", "/dev/*/*");
-        return 1;
+    int fd;
+
+    if((argc <= 1) && (sscanf(argv[1], "%d", &fd) == 1)){
+        printf("$ termux-usb -l\n");
+        printf("$ termux-usb -r ./%s /dev/bus/usb/00*/00*\n", argv[0]);
+        return 0;
     }
     
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
@@ -284,27 +285,33 @@ int main(int argc, char **argv){
     res = libusb_init(&context);
     if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
-        return -1;
+        goto exit;
     }
+    
     printf("%d\n", fd);
+    
     res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
-        return -1;
+        goto exit;
     }
 
     libusb_device *device;
     device = libusb_get_device(h);
+
     struct libusb_device_descriptor desc;
+    memset(&desc, 0, sizeof(struct libusb_device_descriptor));
+
     res = libusb_get_device_descriptor(device, &desc);
     if(res < 0){
         printf("[E] libusb_get_device_descriptor failed: %s\n", libusb_strerror(res));
-        return -1;
+        goto clean_exit;
     }
+    
+    printf("Vendor ID: %04x      ==     %04x\n", desc.idVendor, vendor_id);
+    printf("Product ID: %04x     ==     %04x\n", desc.idProduct, product_id);
     if(desc.idVendor != vendor_id || desc.idProduct != product_id){
-        printf("Vendor ID: %04x\n", desc.idVendor);
-        printf("Product ID: %04x\n", desc.idProduct);
-        return -1;
+        goto clean_exit;
     }
 
 #else
@@ -312,7 +319,7 @@ int main(int argc, char **argv){
     res = libusb_init(NULL);
     if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
-        return -1;
+        goto exit;
     }
 
     // | 端末の接続を待機中... | waiting for device connection. |
@@ -329,7 +336,7 @@ int main(int argc, char **argv){
 
     if (h == NULL) {
         printf("[E] Failed to find device after all attempts\n");
-        return -1;
+        goto exit;
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/API/USBDevice/deviceClass
@@ -338,7 +345,7 @@ int main(int argc, char **argv){
     if (libusb_kernel_driver_active(h, 0) == 1){
         if(libusb_detach_kernel_driver(h, 0) != 0){
             printf("[E] libusb_detach_kernel_driver failed\n");
-            return -1;
+            goto clean_exit;
         }
     }
 
@@ -349,7 +356,7 @@ int main(int argc, char **argv){
     if (res < 0)
     {
         printf("[E] libusb_claim_interface failed: %s\n", libusb_strerror(res));
-        return -1;
+        goto clean_exit;
     }
 
     struct fbusb dev;

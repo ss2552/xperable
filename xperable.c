@@ -231,8 +231,9 @@ int main(int argc, char **argv){
         return 0;
     }
 
-    if(sscanf(argv[1], "%d", &fd) == 1){
-        printf("%s", argv[1]);
+    if(sscanf(argv[1], "%d", &fd) != 1){
+        printf("%d\n", fd);
+        return -1;
     }
 
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
@@ -259,11 +260,13 @@ int main(int argc, char **argv){
         goto clean_exit;
     }
     
-    printf("Vendor ID: %04x      ==     %04x\n", desc.idVendor, vendor_id);
-    printf("Product ID: %04x     ==     %04x\n", desc.idProduct, product_id);
+    printf("[I] Vendor ID: %04x      ==     %04x\n", desc.idVendor, vendor_id);
+    printf("[I] Product ID: %04x     ==     %04x\n", desc.idProduct, product_id);
     if(desc.idVendor != vendor_id || desc.idProduct != product_id){
         goto clean_exit;
     }
+
+    printf("\n\n");
 
 #else
 
@@ -320,7 +323,16 @@ int main(int argc, char **argv){
     dev.maxsize = 16 * 1024 * 1024;
     dev.timeout = 5000;
 
+
+
+    
+    
+    printf("げっとばぁ おーる\n");
     getvar_all(&dev);
+
+
+
+
 
 clean_exit:
     libusb_release_interface(h, inter_face);

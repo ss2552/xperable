@@ -276,6 +276,12 @@ int main(int argc, char **argv){
     int fd;
     struct libusb_device_descriptor desc;
 
+    for(int i = 0; i < args; i++){
+        printf("%s : ", argv[i]);
+    }
+
+    printf("/n");
+
     if(argc < 2){
         printf("$ termux-usb -l\n");
         printf("$ termux-usb -r /dev/bus/usb/00*/00*\n");

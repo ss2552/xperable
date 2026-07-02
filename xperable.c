@@ -263,12 +263,14 @@ static int getvar_all(struct fbusb *dev){
 
 int main(int argc, char **argv){
 
+    libusb_context *context = NULL;
     libusb_device_handle *h;
 
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
 
     int res;
 #ifdef ANDROID_TERMUX
+    
     int fd; 
     if((argc > 1) && (sscanf(argv[1], "%d", &fd) == 1)){
         printf("$termux-usb -l %s %s\n", argv[0], "/dev/");
@@ -278,16 +280,12 @@ int main(int argc, char **argv){
     }
     
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
-#endif
 
-    res = libusb_init(NULL);
+    res = libusb_init(context);
     if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
         return -1;
     }
-
-#ifdef ANDROID_TERMUX
-    libusb_context *context;
     printf("%d\n", fd);
     res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
@@ -310,6 +308,12 @@ int main(int argc, char **argv){
     }
 
 #else
+
+    res = libusb_init(NULL);
+    if (res < 0){
+        printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
+        return -1;
+    }
 
     // | 端末の接続を待機中... | waiting for device connection. |
 

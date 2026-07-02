@@ -276,8 +276,8 @@ int main(int argc, char **argv){
     int fd;
     struct libusb_device_descriptor desc;
 
-    for(int i = 0; i < args; i++){
-        printf("%s : ", argv[i]);
+    for(int i = 0; i < argc; i++){
+        printf("%d %s ", i, argv[i]);
     }
 
     printf("/n");

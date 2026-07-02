@@ -85,16 +85,6 @@ static int fbusb_transfer(struct fbusb *dev, void *buff, int size, int ep)
     return transferred;
 }
 
-int fbusb_send(struct fbusb *dev, void *buff, int size)
-{
-    return fbusb_transfer(dev, buff, size, dev->epo);
-}
-
-int fbusb_recv(struct fbusb *dev, void *buff, int size)
-{
-    return fbusb_transfer(dev, buff, size, dev->epi);
-}
-
 int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
 {
     int res;
@@ -103,7 +93,7 @@ int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
     if (rspsz == NULL || *rspsz < 4)
         return -1;
     memset(rsp, 0, *rspsz);
-    received = fbusb_recv(dev, rsp, *rspsz);
+    received = fbusb_transfer(dev, rsp, *rspsz, dev->epi);
     if (received >= 4)
     {
         res = fastboot_parse_result(rsp);
@@ -132,7 +122,7 @@ int fbusb_bufcmd_resp(struct fbusb *dev, void *rsp, int *rspsz)
 
 int fbusb_bufcmd(struct fbusb *dev, void *req, int reqsz, void *rsp, int *rspsz)
 {
-    int res = fbusb_send(dev, req, reqsz);
+    int res = fbusb_transfer(dev, req, reqsz, dev->epo);
     
     if (res != reqsz)
     {

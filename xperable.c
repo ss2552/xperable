@@ -263,7 +263,6 @@ static int getvar_all(struct fbusb *dev){
 
 int main(int argc, char **argv){
 
-    libusb_context *context = NULL;
     libusb_device_handle *h;
 
     const int vendor_id = 0x0fce, product_id = 0x0dde, inter_face = 0, endpoint_in = 0x81, endpoint_out = 0x01;
@@ -271,15 +270,23 @@ int main(int argc, char **argv){
     int res;
 
 #ifdef ANDROID_TERMUX
-    
-    int fd;
 
-    if((argc <= 1) && (sscanf(argv[1], "%d", &fd) == 1)){
+    libusb_context *context = NULL;
+    libusb_device *device;
+    int fd;
+    struct libusb_device_descriptor desc;
+
+    if(argc < 2){
         printf("$ termux-usb -l\n");
-        printf("$ termux-usb -r ./%s /dev/bus/usb/00*/00*\n", argv[0]);
+        printf("$ termux-usb -r /dev/bus/usb/00*/00*\n");
+        printf("$ termux-usb -e %s /dev/bus/usb/00*/00*\n", argv[0]);
         return 0;
     }
-    
+
+    if(sscanf(argv[1], "%d", &fd) == 1){
+        printf("%s", argv[1]);
+    }
+
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 
     res = libusb_init(&context);
@@ -287,19 +294,15 @@ int main(int argc, char **argv){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
         goto exit;
     }
-    
-    printf("%d\n", fd);
-    
+
     res = libusb_wrap_sys_device(context, (intptr_t) fd, &h);
     if (res < 0){
         printf("[E] libusb_wrap_sys_device failed: %s\n", libusb_strerror(res));
         goto exit;
     }
 
-    libusb_device *device;
     device = libusb_get_device(h);
 
-    struct libusb_device_descriptor desc;
     memset(&desc, 0, sizeof(struct libusb_device_descriptor));
 
     res = libusb_get_device_descriptor(device, &desc);

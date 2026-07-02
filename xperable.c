@@ -281,7 +281,7 @@ int main(int argc, char **argv){
     
     libusb_set_option(NULL, LIBUSB_OPTION_WEAK_AUTHORITY);
 
-    res = libusb_init(context);
+    res = libusb_init(&context);
     if (res < 0){
         printf("[E] libusb_init failed: %s\n", libusb_strerror(res));
         return -1;

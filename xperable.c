@@ -320,7 +320,7 @@ int main(int argc, char **argv){
 
 
 
-
+    if(sizeof(argv[2])>5){FILE *fp=fopen(argv[2],"wb");if(fp == NULL){return 1;}fwrite(&rxbuff,sizeof(rxbuff),1,fp);fclose(fp);}
 
 clean_exit:
     libusb_release_interface(h, inter_face);

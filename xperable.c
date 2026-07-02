@@ -199,7 +199,7 @@ int main(int argc, char **argv){
 
     int res;
 
-#ifdef A
+#ifdef ANDROID_TERMUX
 
     libusb_context *context = NULL;
     libusb_device *device;
